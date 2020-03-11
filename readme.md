@@ -3,3 +3,9 @@ This code was thrown together to faciliate the dumping of asset information from
 
 ## Requirements
 This client is dependent on [Selenium Client Driver](https://www.selenium.dev/selenium/docs/api/py/) and makes use of the [geckodriver](https://github.com/mozilla/geckodriver). 
+
+## Install
+git clone https://github.com/benelser/IPIMSClient.git
+cd IPIMSClient/
+sudo python3 -m pip install -r requirements.txt
+python3 ipims_client.py 
