@@ -6,6 +6,6 @@ This client is dependent on [Selenium Client Driver](https://www.selenium.dev/se
 
 ## Install
 <br />git clone https://github.com/benelser/IPIMSClient.git
-cd IPIMSClient/
+<br />cd IPIMSClient/
 sudo python3 -m pip install -r requirements.txt
 python3 ipims_client.py 
