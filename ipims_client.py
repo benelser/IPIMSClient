@@ -168,7 +168,7 @@ def install_geckodriver():
     output = p.stdout.read()
     if not shutil.which("geckodriver"):
         os.system('clear')
-        os.sys.exit("Failed to install Mozilla geckodriver")
+        os.sys.exit(f"Failed to install Mozilla geckodriver.\nInstall driver using sudo:\n{cmd}")
 
 def get_user_input(selection):
     if selection == 1:
