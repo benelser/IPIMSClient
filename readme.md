@@ -11,3 +11,6 @@ cd IPIMSClient/
 sudo python3 -m pip install -r requirements.txt
 sudo python3 ipims_client.py 
 ````
+
+# Checks 
+Ensure geckodriver.log is in the same directory as script and your current owner has permissions to it.
