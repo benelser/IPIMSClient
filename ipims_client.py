@@ -136,11 +136,7 @@ class platform_client:
         query = {
             "operationName":"GetFirstOrganizationAsset",
             "variables":{
-<<<<<<< HEAD
                 "orgId":self.organization_id
-=======
-                "orgId": self.organization_id
->>>>>>> 1d521e52050a7f37258e3941597172abfbdb075b
             },
             "query":"query GetFirstOrganizationAsset($orgId: String!, $after: String) {\n  organization(id: $orgId) {\n    __typename\n    assets(first: 10000, after: $after, filter: {components: INSIGHT_AGENT}) {\n      edges {\n        __typename\n        node {\n          ...Asset\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        startCursor\n        endCursor\n        __typename\n      }\n      totalCount\n      __typename\n    }\n  }\n}\n\nfragment Asset on Asset {\n  id\n  agent {\n    id\n    agentMode\n    agentVersion\n    agentSemanticVersion\n    agentStatus\n    agentLastUpdateTime\n    timestamp\n    collector {\n      name\n      __typename\n    }\n    agentJobs {\n      executedJobs(filter: {events: [FAILED, ERROR]}) {\n        event\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  location {\n    city\n    countryCode\n    countryName\n    region\n    __typename\n  }\n  host {\n    hostNames {\n      name\n      source\n      __typename\n    }\n    primaryAddress {\n      ip\n      mac\n      __typename\n    }\n    alternateAddresses {\n      ip\n      mac\n      __typename\n    }\n    description\n    __typename\n  }\n  orgId\n  publicIpAddress\n  platform\n  lastBootTime\n  lastLoggedInUser\n  __typename\n}\n"
         }
