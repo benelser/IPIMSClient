@@ -12,6 +12,8 @@ import json
 from subprocess import Popen, PIPE, STDOUT
 import shutil
 
+requests.packages.urllib3.disable_warnings()
+
 class obj(object):
             def __init__(self, d):
                 for a, b in d.items():
@@ -86,6 +88,7 @@ class platform_client:
             os.sys.exit("Unable to authenticate to the Insight Platform\nEnsure the email and password are correct.")
 
     def get_org_id(self):
+        # this org id is acutally the customer level org id...
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
             'Host': 'insight.rapid7.com',
