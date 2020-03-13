@@ -136,7 +136,7 @@ class platform_client:
         query = {
             "operationName":"GetFirstOrganizationAsset",
             "variables":{
-                "orgId":"23a5ab94-a565-4f30-986d-2835e3e80830"
+                "orgId":self.organization_id
             },
             "query":"query GetFirstOrganizationAsset($orgId: String!, $after: String) {\n  organization(id: $orgId) {\n    __typename\n    assets(first: 10000, after: $after, filter: {components: INSIGHT_AGENT}) {\n      edges {\n        __typename\n        node {\n          ...Asset\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        startCursor\n        endCursor\n        __typename\n      }\n      totalCount\n      __typename\n    }\n  }\n}\n\nfragment Asset on Asset {\n  id\n  agent {\n    id\n    agentMode\n    agentVersion\n    agentSemanticVersion\n    agentStatus\n    agentLastUpdateTime\n    timestamp\n    collector {\n      name\n      __typename\n    }\n    agentJobs {\n      executedJobs(filter: {events: [FAILED, ERROR]}) {\n        event\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n  location {\n    city\n    countryCode\n    countryName\n    region\n    __typename\n  }\n  host {\n    hostNames {\n      name\n      source\n      __typename\n    }\n    primaryAddress {\n      ip\n      mac\n      __typename\n    }\n    alternateAddresses {\n      ip\n      mac\n      __typename\n    }\n    description\n    __typename\n  }\n  orgId\n  publicIpAddress\n  platform\n  lastBootTime\n  lastLoggedInUser\n  __typename\n}\n"
         }
@@ -199,6 +199,6 @@ def main():
     hosts = client.get_asset_list()
     print(f"Total platform connected assets: {len(hosts)}")
     for host in hosts:
-        print(f"Id: {host.id}\tplatform: {host.platform}\thostname: {host.host.hostNames[0].name}\tagentVersion: {host.agent.agentVersion}")
+        print(f"Status: {host.agent.agentStatus}\tplatform: {host.platform}\tId: {host.id}\tplatform: {host.platform}\thostname: {host.host.hostNames[0].name}\tagentVersion: {host.agent.agentSemanticVersion}")
 
 main()
