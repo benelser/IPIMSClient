@@ -11,6 +11,7 @@ import requests
 import json
 from subprocess import Popen, PIPE, STDOUT
 import shutil
+import apt
 
 requests.packages.urllib3.disable_warnings()
 
@@ -159,19 +160,27 @@ class platform_client:
 
 def check_environment():
     os.system('clear')
-    print("Checking to see if Mozilla geckodriver is installed")
-    if not shutil.which("geckodriver"):
+    print("Checking to see if dependencies are met")
+    cache = apt.Cache()
+    try:
+        if cache['python3-pip'].is_installed and cache['firefox'].is_installed or shutil.which("firefox") and shutil.which("geckodriver"):
+            print("All installed")
+    except :
         os.system('clear')
-        print("Mozilla geckodriver not installed attempting to download and install")
-        install_geckodriver()
+        print("Attempting to install bootstrap shell script")
+        install_bootstrap()
 
-def install_geckodriver():
-    cmd = 'sudo wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz -O /tmp/geckodriver.tar.gz && sudo tar -C /opt -xzf /tmp/geckodriver.tar.gz && sudo chmod 755 /opt/geckodriver && sudo ln -fs /opt/geckodriver /usr/bin/geckodriver && sudo ln -fs /opt/geckodriver /usr/local/bin/geckodriver'
+def install_bootstrap():
+    cmd = 'sudo wget https://raw.githubusercontent.com/benelser/AWSBOTOQuickStart/master/InsightIDR/bootstrap.sh | bash'
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
     output = p.stdout.read()
-    if not shutil.which("geckodriver"):
+    cache = apt.Cache()
+    try:
+        if cache['python3-pip'].is_installed and cache['firefox'].is_installed and shutil.which("geckodriver"):
+            print("Dependencies met")
+    except:
         os.system('clear')
-        os.sys.exit(f"Failed to install Mozilla geckodriver.\nInstall driver using sudo:\n{cmd}")
+        os.sys.exit(f"Failed to install dependencies.\nTry manually running {cmd}")
 
 def get_user_input(selection):
     if selection == 1:
