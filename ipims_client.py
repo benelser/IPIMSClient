@@ -159,17 +159,24 @@ class platform_client:
             return False
 
 def run_bootstrap():
+    os.system('clear')
     pwd = os.environ['PWD']
     bootstrap = f"{pwd}/bootstrap.sh"
     if os.path.exists(bootstrap):
         print(f"Bootstrap exists at: {bootstrap}\nAttempting to execute")
         time.sleep(2)
+        os.system('clear')
         cmd = 'chmod 755 ./bootstrap.sh && ./bootstrap.sh'
         p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
         output = p.stdout.read()
         if output.decode().split('\n')[-2] == '0':
             print("Dependencies met")
+            time.sleep(3)
+            os.system('clear')
         else:
+            print("Dependencies not met attempting install")
+            time.sleep(3)
+            os.system('clear')
             cmd = 'chmod 755 ./bootstrap.sh && ./bootstrap.sh 1'
             p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
             output = p.stdout.read()
