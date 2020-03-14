@@ -171,7 +171,7 @@ def check_environment():
         install_bootstrap()
 
 def install_bootstrap():
-    cmd = 'sudo wget https://raw.githubusercontent.com/benelser/AWSBOTOQuickStart/master/InsightIDR/bootstrap.sh | bash'
+    cmd = 'sudo wget https://raw.githubusercontent.com/benelser/AWSBOTOQuickStart/master/InsightIDR/bootstrap.sh -O bootstrap.sh && chmod 755 ./bootstrap.sh && ./bootstrap.sh'
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
     output = p.stdout.read()
     cache = apt.Cache()
