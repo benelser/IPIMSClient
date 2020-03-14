@@ -158,30 +158,26 @@ class platform_client:
         except:
             return False
 
-def check_environment():
-    os.system('clear')
-    print("Checking to see if dependencies are met")
-    cache = apt.Cache()
-    try:
-        if cache['python3-pip'].is_installed and cache['firefox'].is_installed or shutil.which("firefox") and shutil.which("geckodriver"):
-            print("All installed")
-    except :
-        os.system('clear')
-        print("Attempting to install bootstrap shell script")
-        install_bootstrap()
-
-def install_bootstrap():
-    cmd = 'sudo wget https://raw.githubusercontent.com/benelser/AWSBOTOQuickStart/master/InsightIDR/bootstrap.sh -O bootstrap.sh && chmod 755 ./bootstrap.sh && ./bootstrap.sh'
-    p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
-    output = p.stdout.read()
-    cache = apt.Cache()
-    try:
-        if cache['python3-pip'].is_installed and cache['firefox'].is_installed and shutil.which("geckodriver"):
+def run_bootstrap():
+    pwd = os.environ['PWD']
+    bootstrap = f"{pwd}/bootstrap.sh"
+    if os.path.exists(bootstrap):
+        print(f"Bootstrap exists at: {bootstrap}\nAttempting to execute")
+        time.sleep(2)
+        cmd = 'chmod 755 ./bootstrap.sh && ./bootstrap.sh'
+        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+        output = p.stdout.read()
+        if output.decode().split('\n')[-2] == '0':
             print("Dependencies met")
-    except:
-        os.system('clear')
-        os.sys.exit(f"Failed to install dependencies.\nTry manually running {cmd}")
-
+        else:
+            cmd = 'chmod 755 ./bootstrap.sh && ./bootstrap.sh 1'
+            p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+            output = p.stdout.read()
+            if output.decode().split('\n')[-2] == '1':
+                os.sys.exit(f"Failed to install dependencies.\nTry manually installing packages inside bootstrap.sh")
+    else:
+        print(f"Bootstrap.sh not found with script.\nFollow install instructions at:\nhttps://github.com/benelser/IPIMSClient/blob/master/readme.md")
+    
 def get_user_input(selection):
     if selection == 1:
         answer = "n"
@@ -202,7 +198,7 @@ def get_user_input(selection):
         return getpass("Enter Rapid7 Insight Platform password:\n")
      
 def main():
-    check_environment()
+    run_bootstrap()
     organization = get_user_input(1)
     email = get_user_input(2)
     password = get_user_input(3)
