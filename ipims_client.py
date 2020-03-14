@@ -23,6 +23,15 @@ class obj(object):
                     else:
                         setattr(self, a, obj(b) if isinstance(b, dict) else b)
 
+class rapid7_product(object):
+    def __init__(self, pn, pc, pt):
+        self.Product_Token = pt
+        self.Product_Name = pn
+        self.Product_Code = pc
+    
+    def __str__(self):
+        return f"ProductName: {self.Product_Name}\n,ProductCode: {self.Product_Code}\n,ProductToken: {self.Product_Token}\n,"
+
 class platform_client:
     def __init__(self, username, password, organization):
         self.username = username
@@ -30,9 +39,12 @@ class platform_client:
         self.organization_id = ""
         self.session = requests.session()
         self.IPIMS_SESSION = ""
+        self.X_CSRF_TOKEN = ""
+        self.Products = []
         self.organization_name = organization
         self.login()
         self.get_org_id()
+        self.get_org_products()
 
     def login(self):
         os.system('clear')
@@ -65,6 +77,7 @@ class platform_client:
             try:
                 current_url = browser.current_url
                 if current_url == 'https://insight.rapid7.com/platform#/':
+                    self.X_CSRF_TOKEN = browser.find_element_by_xpath("//meta[@name='_csrf']").get_attribute("content")
                     loaded = True
                     break
                 else:
@@ -117,8 +130,45 @@ class platform_client:
             self.organization_id = False
         self.organization_id = False
 
+    def get_org_products(self):
+        # this org id is acutally the customer level org id...
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+            'Host': 'insight.rapid7.com',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'close',
+            'Cookie': self.IPIMS_SESSION
+        }
+        self.session.headers.clear()
+        self.session.headers.update(headers)
+        try:
+            r = self.session.get('https://insight.rapid7.com/api/1/user/customers', verify=False, allow_redirects=True)
+            responseBody = json.loads(r.content)
+            orgs = responseBody[0]['organizationAccessList']
+            if len(orgs) > 1:
+                products = []
+                for org in orgs:
+                    if org['organizationName'].upper() == self.organization_name.upper():
+                        orgProducts = org['products']
+                        for product in orgProducts:
+                            products.append(rapid7_product(product['productName'], product['productCode'], product['productToken']))
+                self.Products = products
+            else:
+                products = []
+                orgProducts = orgs[0]['products']
+                for product in orgProducts:
+                    products.append(rapid7_product(product['productName'], product['productCode'], product['productToken']))
+                self.Products = products
+        except:
+            print("Something went wrong while populating organization products")
+
     def __str__(self):
-        return f'organization_id: {self.organization_id}\norganization_name: {self.organization_name}\nIPIMS_SESSION: {self.IPIMS_SESSION}\n '
+        print("Platform Products:\n")
+        for product in self.Products:
+            print(f"{product.Product_Name}, {product.Product_Code}. {product.Product_Token}")
+        return f'organization_id: {self.organization_id}\norganization_name: {self.organization_name}\nIPIMS_SESSION: {self.IPIMS_SESSION}\n'
 
     def get_asset_list(self):
         headers = {
@@ -157,7 +207,10 @@ class platform_client:
             return hosts
         except:
             return False
-
+    
+    def pair_collector_to_platform(self, key, ):
+        print("some")
+        
 def run_bootstrap():
     os.system('clear')
     pwd = os.environ['PWD']
@@ -203,7 +256,13 @@ def get_user_input(selection):
     if selection == 3:
         os.system("clear")
         return getpass("Enter Rapid7 Insight Platform password:\n")
-     
+
+def print_assets():
+    hosts = client.get_asset_list()
+    print(f"Total platform connected assets: {len(hosts)}")
+    for host in hosts:
+        print(f"Status: {host.agent.agentStatus}\tplatform: {host.platform}\tId: {host.id}\tplatform: {host.platform}\thostname: {host.host.hostNames[0].name}\tagentVersion: {host.agent.agentSemanticVersion}")
+
 def main():
     run_bootstrap()
     organization = get_user_input(1)
@@ -211,9 +270,5 @@ def main():
     password = get_user_input(3)
     client = platform_client(email, password, organization)
     print(client)
-    hosts = client.get_asset_list()
-    print(f"Total platform connected assets: {len(hosts)}")
-    for host in hosts:
-        print(f"Status: {host.agent.agentStatus}\tplatform: {host.platform}\tId: {host.id}\tplatform: {host.platform}\thostname: {host.host.hostNames[0].name}\tagentVersion: {host.agent.agentSemanticVersion}")
-
+    
 main()
