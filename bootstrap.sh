@@ -1,5 +1,6 @@
 #!/bin/bash
 # take one argument to either do the intial install and check or just check dependencies
+# python handler script is reading returned output either 0 (success) 1 (failure)
 INSTALL=$1
 
 function check () {
