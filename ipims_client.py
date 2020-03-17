@@ -59,10 +59,10 @@ class platform_client:
         os.system('clear')
         print("Bootstrapping Insight Platform Authentication")
         # Testing only ensure to set system proxy
-        proxy = Proxy({
-            'proxyType': ProxyType.SYSTEM,
+        # proxy = Proxy({
+        #     'proxyType': ProxyType.SYSTEM,
 
-        })
+        # })
         
         # Selenium bootstrap
         browser_options = webdriver.FirefoxOptions()
@@ -89,6 +89,7 @@ class platform_client:
                 if current_url == 'https://insight.rapid7.com/platform#/':
                     self.X_CSRF_TOKEN = browser.find_element_by_xpath("//meta[@name='_csrf']").get_attribute("content")
                     loaded = True
+                    self.write_log(f"Successfully logged into platform {current_url}")
                     break
                 else:
                     os.system('clear')
@@ -110,6 +111,7 @@ class platform_client:
             self.IPIMS_SESSION = IPIMS_SESSION
         except:
             os.system('clear')
+            self.write_log("Unable to authenticate to the Insight Platform")
             os.sys.exit("Unable to authenticate to the Insight Platform\nEnsure the email and password are correct.")
 
     def get_org_id(self):
@@ -255,11 +257,11 @@ class platform_client:
         try:
             r = self.session.post('https://us.platform-collector-ui.insight.rapid7.com/api/1/collectors', data=jsondataasbytes, verify=False, allow_redirects=True)
             if r.status_code != 200:
-                print("failed to pair collector")
+                self.write_log("Failed to pair collector")
                 return False
             return True
         except:
-            print("Failed to pair collector")
+            self.write_log("Failed to pair collector")
             return False
 
     def get_customer_session(self):
@@ -288,6 +290,20 @@ class platform_client:
         except:
             print("Falied to get customer session cookie")
             return False
+
+    def write_log(self,m):
+        try:
+            log = "/opt/rapid7/ipims_client.log"
+            f = open(log, "w+")
+            now = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            f.write(f"{m} {now}")
+            f.close()
+        except:
+            log = "/opt/rapid7/ipims_client1.log"
+            f = open(log, "w+")
+            now = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            f.write(f"{m} {now}")
+            f.close()
 
 def run_bootstrap():
     os.system('clear')
