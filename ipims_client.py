@@ -14,6 +14,7 @@ from subprocess import Popen, PIPE, STDOUT
 import shutil
 import apt
 import datetime
+import argparse
 
 requests.packages.urllib3.disable_warnings()
 
@@ -65,7 +66,7 @@ class platform_client:
         
         # Selenium bootstrap
         browser_options = webdriver.FirefoxOptions()
-        #browser_options.add_argument('-headless')
+        browser_options.add_argument('-headless')
         browser = webdriver.Firefox(options=browser_options)
         #browser = webdriver.Firefox(proxy=proxy, options=browser_options)
         browser.get("https://insight.rapid7.com/login")
@@ -360,13 +361,21 @@ def read_collector_key():
     except:
         sys.exit("Failed to get agent key. {file} does not exist")
 
+def input_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--email", required=True, help="Rapid7 Insight Platform email")
+    parser.add_argument("--password", required=True, help="Rapid7 Insight Platform password")
+    parser.add_argument("--organization", required=True, help="Rapid7 Insight Platform organization")
+    return parser.parse_args()
+
 def main():
     run_bootstrap()
+    args = input_args()
+    
     # organization = get_user_input(1)
     # email = get_user_input(2)
     # password = get_user_input(3)
-    # client = platform_client(email, password, organization)
-    # client.pair_collector_to_platform("dfaa3e0c-786f-4bbf-b111-ce26bd2ac389", "Python3")
-    print(read_collector_key())
+    client = platform_client(args.email, args.password, args.organization)
+    client.pair_collector_to_platform(read_collector_key(), os.uname()[1])
     
 main()
