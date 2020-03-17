@@ -291,7 +291,7 @@ class platform_client:
 
 def run_bootstrap():
     os.system('clear')
-    pwd = os.environ['PWD']
+    pwd = os.environ.get('PWD')
     bootstrap = f"{pwd}/bootstrap.sh"
     if os.path.exists(bootstrap):
         print(f"Bootstrap exists at: {bootstrap}\nAttempting to execute")
