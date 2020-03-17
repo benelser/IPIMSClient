@@ -7,11 +7,13 @@ import time
 from getpass import getpass
 import ssl
 import os
+import re
 import requests
 import json
 from subprocess import Popen, PIPE, STDOUT
 import shutil
 import apt
+import datetime
 
 requests.packages.urllib3.disable_warnings()
 
@@ -37,28 +39,35 @@ class platform_client:
         self.username = username
         self.password = password
         self.organization_id = ""
+        self.customer_id = ""
         self.session = requests.session()
         self.IPIMS_SESSION = ""
+        self.IPIMS_SESSION_Customer = ""
         self.X_CSRF_TOKEN = ""
         self.Products = []
+        self.IDR = None
+        self.IVM = None
+        self.AppSec = None
         self.organization_name = organization
         self.login()
         self.get_org_id()
+        self.get_customer_session()
         self.get_org_products()
 
     def login(self):
         os.system('clear')
         print("Bootstrapping Insight Platform Authentication")
         # Testing only ensure to set system proxy
-        # proxy = Proxy({
-        #     'proxyType': ProxyType.SYSTEM,
+        proxy = Proxy({
+            'proxyType': ProxyType.SYSTEM,
 
-        # })
-        # browser = webdriver.Firefox(proxy=proxy, options=browser_options)
+        })
+        
         # Selenium bootstrap
         browser_options = webdriver.FirefoxOptions()
-        browser_options.add_argument('-headless')
+        #browser_options.add_argument('-headless')
         browser = webdriver.Firefox(options=browser_options)
+        #browser = webdriver.Firefox(proxy=proxy, options=browser_options)
         browser.get("https://insight.rapid7.com/login")
         assert "Rapid7 - Login" in browser.title
         uname = browser.find_element_by_id("okta-signin-username")
@@ -95,6 +104,7 @@ class platform_client:
         
         try:
             cookies  = browser.get_cookies()
+            # Customer level platform cookie
             IPIMS_SESSION = f"IPIMS_SESSION={cookies[5]['value']};"
             self.IPIMS_SESSION = IPIMS_SESSION
         except:
@@ -122,9 +132,11 @@ class platform_client:
                 for org in orgs:
                     if org['organizationName'].upper() == self.organization_name.upper():
                         self.organization_id = org['organizationId']
+                        self.customer_id = org['organizationRef']['customer']['customerId']
                         return
             else:
                 self.organization_id = orgs[0]['organizationId']
+                self.customer_id = orgs[0]['organizationRef']['customer']['customerId']
                 return
         except:
             self.organization_id = False
@@ -139,7 +151,7 @@ class platform_client:
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
             'Connection': 'close',
-            'Cookie': self.IPIMS_SESSION
+            'Cookie': self.IPIMS_SESSION_Customer
         }
         self.session.headers.clear()
         self.session.headers.update(headers)
@@ -155,14 +167,22 @@ class platform_client:
                         for product in orgProducts:
                             products.append(rapid7_product(product['productName'], product['productCode'], product['productToken']))
                 self.Products = products
+                self.sort_org_products()
             else:
                 products = []
                 orgProducts = orgs[0]['products']
                 for product in orgProducts:
                     products.append(rapid7_product(product['productName'], product['productCode'], product['productToken']))
                 self.Products = products
+                self.sort_org_products()
         except:
             print("Something went wrong while populating organization products")
+
+    def sort_org_products(self):
+        # only handles orgs with one of each product at the moment
+        self.IDR  = [p for p in self.Products if p.Product_Name == "InsightIDR"][0]
+        self.AppSec  = [p for p in self.Products if p.Product_Name == "InsightAppSec"][0]
+        self.IVM  = [p for p in self.Products if p.Product_Name == "InsightVM Platform Enablement"][0]
 
     def __str__(self):
         print("Platform Products:\n")
@@ -208,9 +228,66 @@ class platform_client:
         except:
             return False
     
-    def pair_collector_to_platform(self, key, ):
-        print("some")
-        
+    def pair_collector_to_platform(self, key, name):
+        headers = {
+            'Host': 'us.platform-collector-ui.insight.rapid7.com',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Referer': f'https://us.idr.insight.rapid7.com/op/{self.IDR.Product_Token}',
+            'content-type': 'application/json;charset=utf-8',
+            'X-ORGPRODUCT-TOKEN' : self.IDR.Product_Token,
+            'Origin': 'https://us.idr.insight.rapid7.com',
+            'Connection': 'close',
+            'Cookie': self.IPIMS_SESSION_Customer 
+        }
+        self.session.headers.clear()
+        self.session.headers.update(headers)
+        body = {
+            "agentKey":key,
+            "name":name,
+            "purpose":"GENERAL"
+        }
+        jsondata = json.dumps(body)
+        jsondataasbytes = jsondata.encode('utf-8') 
+        try:
+            r = self.session.post('https://us.platform-collector-ui.insight.rapid7.com/api/1/collectors', data=jsondataasbytes, verify=False, allow_redirects=True)
+            if r.status_code != 200:
+                print("failed to pair collector")
+                return False
+            return True
+        except:
+            print("Failed to pair collector")
+            return False
+
+    def get_customer_session(self):
+        headers = {
+
+            'Host': 'insight.rapid7.com',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'X-CSRF-TOKEN' : self.X_CSRF_TOKEN, 
+            'Referer': 'https://insight.rapid7.com/platform',
+            'Connection': 'close',
+            'Cookie': self.IPIMS_SESSION
+        }
+        self.session.headers.clear()
+        self.session.headers.update(headers)
+        try:
+            url = f"https://insight.rapid7.com/api/1/me/session/customer?customerId={self.customer_id}"
+            r = self.session.put(url, verify=False, allow_redirects=True)
+            if r.status_code != 200:
+                # Log to /opt/rapid7 status here since this is going to be ran where collector was installed
+                return False
+            self.IPIMS_SESSION_Customer = re.search('IPIMS_SESSION=(.|\n)*?;', r.headers['Set-Cookie']).group(0).replace(';','').strip()
+            return True
+        except:
+            print("Falied to get customer session cookie")
+            return False
+
 def run_bootstrap():
     os.system('clear')
     pwd = os.environ['PWD']
@@ -263,12 +340,33 @@ def print_assets():
     for host in hosts:
         print(f"Status: {host.agent.agentStatus}\tplatform: {host.platform}\tId: {host.id}\tplatform: {host.platform}\thostname: {host.host.hostNames[0].name}\tagentVersion: {host.agent.agentSemanticVersion}")
 
+def read_collector_key():
+    log = "/opt/rapid7/ipims_client.log"
+    file = "/opt/rapid7/collector/agent-key/Agent_Key.txt"
+    if not os.path.exists(file):
+        try:
+            f = open(log, "w+")
+            now = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            f.write(f"FAILED to get agent key {now}")
+            f.close()
+        except:
+            sys.exit("Failed to get agent key. {file} does not exist")
+        sys.exit("Failed to get agent key. {file} does not exist")
+    try:
+        f = open(file, encoding='ascii')
+        key = f.read().strip()
+        f.close()
+        return key
+    except:
+        sys.exit("Failed to get agent key. {file} does not exist")
+
 def main():
     run_bootstrap()
-    organization = get_user_input(1)
-    email = get_user_input(2)
-    password = get_user_input(3)
-    client = platform_client(email, password, organization)
-    print(client)
+    # organization = get_user_input(1)
+    # email = get_user_input(2)
+    # password = get_user_input(3)
+    # client = platform_client(email, password, organization)
+    # client.pair_collector_to_platform("dfaa3e0c-786f-4bbf-b111-ce26bd2ac389", "Python3")
+    print(read_collector_key())
     
 main()
