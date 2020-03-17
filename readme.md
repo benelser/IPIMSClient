@@ -8,6 +8,5 @@ This client is dependent on [Selenium Client Driver](https://www.selenium.dev/se
 ```bash
 git clone https://github.com/benelser/IPIMSClient.git
 cd IPIMSClient/
-sudo python3 -m pip install -r requirements.txt
 python3 ipims_client.py 
 ```
