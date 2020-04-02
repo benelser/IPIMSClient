@@ -382,7 +382,7 @@ def input_args():
     parser.add_argument("--email", required=True, help="Rapid7 Insight Platform email")
     parser.add_argument("--password", required=True, help="Rapid7 Insight Platform password")
     parser.add_argument("--organization", required=True, help="Rapid7 Insight Platform organization")
-    parser.add_argument("--hostname", required=True, help="Rapid7 Insight Platform Collector hostname")
+    parser.add_argument("--hostname", required=False, help="Rapid7 Insight Platform Collector hostname")
     return parser.parse_args()
 
 def main():
@@ -393,6 +393,6 @@ def main():
     # email = get_user_input(2)
     # password = get_user_input(3)
     client = platform_client(args.email, args.password, args.organization)
-    client.pair_collector_to_platform(read_collector_key(), args.hostname)
+    #client.pair_collector_to_platform(read_collector_key(), args.hostname)
     
 main()
