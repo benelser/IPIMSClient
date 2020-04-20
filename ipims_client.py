@@ -389,10 +389,12 @@ def main():
     run_bootstrap()
     args = input_args()
     
-    # organization = get_user_input(1)
-    # email = get_user_input(2)
-    # password = get_user_input(3)
-    client = platform_client(args.email, args.password, args.organization)
+    organization = get_user_input(1)
+    email = get_user_input(2)
+    password = get_user_input(3)
+    client = platform_client(email, password, organization)
+    print_assets()
+    #client = platform_client(args.email, args.password, args.organization)
     #client.pair_collector_to_platform(read_collector_key(), args.hostname)
     
 main()
